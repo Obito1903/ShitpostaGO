@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Obito1903/shitpostaGo/shitmanagment"
 	"github.com/Obito1903/shitpostaGo/shitmanagment/db"
@@ -64,6 +65,13 @@ func shitCount(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func periodicScan() {
+	for {
+		shitmanagment.ScanForNewShit()
+		time.Sleep(5 * time.Minute)
+	}
+}
+
 func main() {
 	shitmanagment.ScanForNewShit()
 
@@ -71,6 +79,6 @@ func main() {
 	http.Handle("/", fs)
 	http.HandleFunc("/shit", shit)
 	http.HandleFunc("/shitCount", shitCount)
-
+	go periodicScan()
 	http.ListenAndServe(":8090", nil)
 }
