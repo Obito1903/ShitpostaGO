@@ -100,8 +100,6 @@
                 var mediaFrame = document.createElement("video");
                 mediaFrame.setAttribute("autoplay", "");
                 mediaFrame.setAttribute("controls", "");
-                mediaFrame.setAttribute("width", "1280");
-                mediaFrame.setAttribute("height", "720");
                 if (("auto" in params) && (params["auto"] == "true")) {
                     mediaFrame.addEventListener("ended", randomVideo, false);
                     autoEnable = true;
