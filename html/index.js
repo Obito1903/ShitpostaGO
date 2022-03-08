@@ -19,9 +19,9 @@ function getParams() {
         listParam[second[0]] = second[1];
     }
 
-    listParam["auto"] = (listParam["auto"] == !undefined ? listParam["auto"] : false);
+    listParam["auto"] = (listParam["auto"] == !undefined ? listParam["auto"] : true);
     listParam["type"] = (listParam["type"] == !undefined ? listParam["type"] : 'videos');
-    listParam["id"] = (parseInt(listParam["id"]) == NaN ? parseInt(listParam["id"]) : 1);
+    listParam["id"] = (parseInt(listParam["id"]) == NaN ? parseInt(listParam["id"]) : rand(1, getCounts(GlobaleState.mediaType)));
     return listParam
 }
 
