@@ -33,7 +33,7 @@ function rand(min, max) {
 
 function toggleAutoMode() {
     GlobaleState.autoMode = !GlobaleState.autoMode;
-    updatePage()
+    setVideo()
 }
 
 function switchMediaType() {
