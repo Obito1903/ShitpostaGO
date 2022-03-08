@@ -57,7 +57,7 @@ func moveFileBasedOnExtension(file fs.DirEntry) bool {
 	case ".webm":
 		moveFile(file, "./data/video/"+fmt.Sprintf("%d%v", db.AddVideo(file.Name(), ext), ext))
 	case ".mov":
-		moveFile(file, "./data/video/"+fmt.Sprintf("%d.mp4", db.AddVideo(file.Name(), ".mov")))
+		moveFile(file, "./data/video/"+fmt.Sprintf("%d.mp4", db.AddVideo(file.Name(), ".mp4")))
 	case ".gif":
 		convertGifandMove(file, "./data/video/"+fmt.Sprintf("%d.mp4", db.AddVideo(file.Name(), ".mp4")))
 	case ".jpg":
