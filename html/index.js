@@ -18,6 +18,10 @@ function getParams() {
         second = first[i].split("=");
         listParam[second[0]] = second[1];
     }
+
+    listParam["auto"] = (listParam["auto"] == !undefined ? listParam["auto"] : false);
+    listParam["type"] = (listParam["type"] == !undefined ? listParam["type"] : 'videos');
+    listParam["id"] = (parseInt(listParam["id"]) == NaN ? parseInt(listParam["id"]) : 1);
     return listParam
 }
 
@@ -112,6 +116,7 @@ function setImage() {
 }
 
 function setMedia(ID) {
+    console.log(GlobaleState)
     GlobaleState.mediaID = ID
     switch (GlobaleState.mediaType) {
         case "videos":
@@ -178,9 +183,10 @@ function randomImage() {
 
 function onload() {
     params = getParams();
-    GlobaleState.autoMode = params["auto"] == 'true'
-    GlobaleState.mediaType = params["type"]
+    GlobaleState.autoMode = params["auto"]
+    GlobaleState.mediaType = (params["type"] == !undefined ? params["auto"] : 'videos')
     GlobaleState.mediaID = parseInt(params["id"])
+    console.log("yo")
     document.addEventListener('keydown', processKey)
     updateButtons();
     setMedia(GlobaleState.mediaID)
