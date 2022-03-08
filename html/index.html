@@ -1,132 +1,70 @@
 <html>
 
-<head>
-    <meta charset="UTF-8">
-    <style type="text/css">
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: black;
-            color: white;
-            align-items: center;
-            text-align: center;
-        }
+    <head>
+        <link rel="stylesheet" href="style.css" />
+        <link rel="stylesheet" href="shit.css" />
+        <title>I don't know</title>
+    </head>
 
-        img {
-            height: 81vh;
-        }
+    <body onload="onload()">
+        <div class="flex-none relative shadow-sm">
+            <nav class="bg-gray-800">
+                <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                    <div class="relative flex items-center justify-between h-16">
+                        <div class="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
+                            <div class="flex-shrink-0 flex items-center">
+                                <p class="text-white font-bold text-xl">ShitpostaGO</p>
+                            </div>
+                        </div>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+                            <a href="#media" class="bg-gray-800 p-1 rounded-full text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white">
+                                <span>Hide</span>
 
-        video {
-            height: 81vh;
-        }
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+        </div>
 
-        .footer {
-
-            margin-top: auto;
-        }
-    </style>
-</head>
-
-<body>
-    <h1><span id="mediaType"></span> n°<span id="mediaId"></span></h1>
-    <div id="media">
-
-    </div>
-    <div class="buttonList">
-        <button onclick="randomVideo()">Random Video</button>
-        <button onclick="randomImage()">Random Image</button>
-        <input type="checkbox" id="autoMode" name="Auto Mode" onclick="switchAutoMode()"> <label for="autoMode">Auto
-            Mode</label>
-    </div>
-    <p> <span id="nbVid"></span> videos et <span id="nbImg"></span> images de merde </p>
-    <div class="footer">
-        <a href="https://github.com/Obito1903/ShitpostaGO">Github</a>
-    </div>
-
-</body>
-<script>
-    var autoEnable = false
-    function getParams() {
-        var listParam = new Object();
-        // get everything after "?" in the uri
-        param = window.location.search.slice(1, window.location.search.length);
-        // break down param key and value
-        first = param.split("&");
-        for (i = 0; i < first.length; i++) {
-            second = first[i].split("=");
-            listParam[second[0]] = second[1];
-        }
-        return listParam
-    }
-
-    function rand(min, max) {
-        min = Math.ceil(min);
-        max = Math.floor(max);
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    function randomVideo() {
-        window.location = "?type=videos&auto=" + autoEnable + "&id=" + rand(1, nbVid)
-    }
-
-    function randomImage() {
-        window.location = "?type=images&auto=" + autoEnable + "&id=" + rand(1, nbImg)
-    }
-
-    function switchAutoMode() {
-        autoEnable = !autoEnable;
-    }
-
-    function getCounts(type) {
-        var count;
-
-        xhttp = new XMLHttpRequest();
-
-        xhttp.onreadystatechange = function () {
-            if ((this.readyState == 4) && (this.status == 200)) {
-                count = this.responseText
-            }
-        };
-
-        xhttp.open("POST", window.location.origin + "/shitCount", false);
-        xhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhttp.send("type=" + type);
-        return count
-    }
-    params = getParams()
-
-    var nbVid = getCounts("videos")
-    var nbImg = getCounts("images")
-    document.getElementById("nbVid").innerHTML = nbVid;
-    document.getElementById("nbImg").innerHTML = nbImg;
-
-    if ("auto" in params) {
-        document.getElementById("autoMode").checked = (params["auto"] == "true");
-    }
-
-    if ("id" in params) {
-        switch (params["type"]) {
-            case "videos":
-                var mediaFrame = document.createElement("video");
-                mediaFrame.setAttribute("autoplay", "");
-                mediaFrame.setAttribute("controls", "");
-                if (("auto" in params) && (params["auto"] == "true")) {
-                    mediaFrame.addEventListener("ended", randomVideo, false);
-                    autoEnable = true;
-                }
-                break;
-            case "images":
-                var mediaFrame = document.createElement("img")
-            default:
-                break;
-        }
-        mediaFrame.id = "mediaFrame"
-        mediaFrame.setAttribute("src", window.location.origin + "/shit?id=" + params["id"] + "&type=" + params["type"]);
-        document.getElementById("media").appendChild(mediaFrame)
-
-        document.getElementById("mediaType").innerHTML = params["type"].slice(0, -1);
-        document.getElementById("mediaId").innerHTML = params["id"];
-    }
-
-</script>
+        <div id="media" class="flex items-center justify-center bg-gray-900 h-screen shadow-sm">
+        </div>
+        <div class="flex-none relative shadow-sm bg-gray-800">
+            <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div class="relative flex items-center justify-center h-16 flex-row">
+                    <div class="flex-1 flex items-center justify-center">
+                        <button onclick="setMedia(GlobaleState.mediaID-1)" class="flex-1 ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M15.707 15.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 010 1.414zm-6 0a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 10l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Previous
+                        </button>
+                        <button onclick="randomVideo()" class="flex-1 ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                            Random
+                        </button>
+                        <button onclick="setMedia(GlobaleState.mediaID+1)" class="flex-1 ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                            Next
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                <path fill-rule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="relative flex items-center justify-center h-16 flex-row">
+                    <div class="flex-1 flex items-center justify-center">
+                        <button id="autoButton" onclick="toggleAutoMode()" class="flex-1 ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-red-600 hover:bg-red-700">
+                            Auto Mode
+                        </button>
+                        <button id="mediaType" onclick="switchMediaType()" class="flex-1 ml-8 whitespace-nowrap inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-green-600 hover:bg-green-700">
+                            Video
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="https://raw.githubusercontent.com/john-doherty/swiped-events/master/src/swiped-events.js"></script>
+    <script src="index.js"></script>
 
 </html>

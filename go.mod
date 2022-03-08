@@ -1,5 +1,5 @@
 module github.com/Obito1903/shitpostaGo
 
-go 1.16
+go 1.17
 
-require github.com/mattn/go-sqlite3 v1.14.6 // indirect
+require github.com/mattn/go-sqlite3 v1.14.12 // indirect

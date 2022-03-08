@@ -80,5 +80,5 @@ func main() {
 	http.HandleFunc("/shit", shit)
 	http.HandleFunc("/shitCount", shitCount)
 	go periodicScan()
-	http.ListenAndServe(":8090", nil)
+	http.ListenAndServe(":80", nil)
 }
