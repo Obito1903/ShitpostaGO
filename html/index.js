@@ -119,7 +119,10 @@ function setImage() {
 
 function setMedia(ID) {
     console.log(GlobaleState)
+    console.log(`${window.location.protocol}//${window.location.host}/shit?id=${GlobaleState.mediaID}&type=${GlobaleState.mediaType}`)
+    document.querySelector('meta[name="metaVideo"]').setAttribute("content", `${window.location.protocol}//${window.location.host}/shit?id=${GlobaleState.mediaID}&type=${GlobaleState.mediaType}`);
     GlobaleState.mediaID = ID
+
     switch (GlobaleState.mediaType) {
         case "videos":
             setVideo(ID);
