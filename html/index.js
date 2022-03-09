@@ -112,6 +112,7 @@ function setImage() {
     mediaFrame.id = "mediaFrame"
     mediaFrame.setAttribute("src", shitBase + "/shit?id=" + GlobaleState.mediaID + "&type=images");
     mediaContainer.appendChild(mediaFrame)
+    mediaFrame.onclick(randomImage())
 
     updatePage()
 }
