@@ -7,6 +7,12 @@ import (
 )
 
 func TestInitDB(t *testing.T) {
-	db.NewSqlite("../../test.sqlite")
+	db.NewSqlite("../../test.sqlite", db.DatabaseConfig{
+		Folder: "./test/",
+	})
 
+}
+
+func TestVideoTranscode(t *testing.T) {
+	db.ImportFile("../../Bucket.webm", "../../", "video0")
 }
