@@ -2,3 +2,7 @@ ffmpeg2pass-0.log
 data
 shitpostaGo
 ffmpeg2pass-0.log.mbtree
+*.sqlite
+*.mp4
+*.gif
+*.webm
