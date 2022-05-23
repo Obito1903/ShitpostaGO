@@ -1,7 +1,12 @@
 package db
 
 import (
+	"encoding/json"
+	"errors"
+	"io/fs"
 	"log"
+	"os"
+	"path"
 	"time"
 )
 
@@ -13,34 +18,43 @@ const (
 	Unknown MediaType = "unknown"
 )
 
-type DatabaseConfig struct {
+type Database struct {
+	DatabaseInterface
 	Folder string
 }
 
-type Database interface {
-	GetConfig() DatabaseConfig
+type DatabaseInterface interface {
+	GetConfig() Database
 
-	NewMediaFromPath(path string) Media
-
+	NewMediaFromPath(path string) (Media, error)
 	UpdateMedia(media Media) Media
-	NewCategory(name string) Category
-	UpdateCategory(category Category) Category
-
+	RemoveMedia(media Media)
 	GetMediaFromId(id int64) Media
-	GetMediaCats(media Media) []Category
 	GetMediasFromCats(categories []Category) []Media
+	AddCategoryToMedia(media Media, category Category) Media
+	RemoveCategoryFromMedia(media Media, category Category) Media
 
+	NewCategory(name string) Category
+	RemoveCategory(category Category)
+	UpdateCategory(category Category) Category
 	GetCategoryFromId(id int64) Category
+	GetCategoriesFromId(ids []int64) []Category
+	GetCategoriesFromMedia(media Media) []Category
 	GetCategories() []Category
 }
 
 type Category struct {
-	id   int
+	Id   int
 	Name string
 }
 
+type categoryLink struct {
+	Media_id    int64
+	Category_id int64
+}
+
 type Media struct {
-	id          int
+	Id          int64
 	Og_name     string
 	Name        string
 	Path        string
@@ -49,8 +63,37 @@ type Media struct {
 	Catergories []Category
 }
 
+func (media Media) String() string {
+	out, _ := json.Marshal(media)
+	return string(out)
+}
+
 func checkDBerr(err error) {
 	if err != nil {
 		log.Fatal("DB ERROR : ", err)
 	}
+}
+
+func (db Database) initFs() {
+	for _, folder := range [4]string{
+		db.Folder,
+		path.Join(db.Folder, "/videos/"),
+		path.Join(db.Folder, "/images/"),
+		path.Join(db.Folder, "/import/"),
+	} {
+		if _, err := os.Stat(folder); os.IsNotExist(err) {
+			os.MkdirAll(folder, os.ModePerm)
+		}
+	}
+}
+
+func CheckFileExist(filePath string) (bool, error) {
+	_, err := os.Stat(filePath)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, fs.ErrNotExist) {
+		return false, nil
+	}
+	return false, err
 }
