@@ -3,6 +3,7 @@ package db
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"os"
@@ -18,6 +19,41 @@ const (
 	Unknown MediaType = "unknown"
 )
 
+type ErrorCode string
+
+const (
+	InitFailed    ErrorCode = "InitFailed"
+	FileNotFound  ErrorCode = "FileNotFound"
+	ImportFailed  ErrorCode = "ImportFailed"
+	EntryNotFound ErrorCode = "EntryNotFound"
+)
+
+type DBError struct {
+	Err     error
+	Message string
+	Code    ErrorCode
+}
+
+func (dberr DBError) Error() string {
+	if dberr.Err != nil {
+		return fmt.Sprintf("%s: %s\n  ⎣%s", dberr.Code, dberr.Message, dberr.Err)
+	} else {
+		return fmt.Sprintf("%s: %s", dberr.Code, dberr.Message)
+	}
+}
+
+func checkErr(err error, message string, code ErrorCode) *DBError {
+	if (err != nil) && (err != (*DBError)(nil)) {
+		log.Println(err)
+		return &DBError{
+			err,
+			message,
+			code,
+		}
+	}
+	return nil
+}
+
 type Database struct {
 	DatabaseInterface
 	Folder string
@@ -26,21 +62,23 @@ type Database struct {
 type DatabaseInterface interface {
 	GetConfig() Database
 
-	NewMediaFromPath(path string) (Media, error)
-	UpdateMedia(media Media) Media
-	RemoveMedia(media Media)
-	GetMediaFromId(id int64) Media
-	GetMediasFromCats(categories []Category) []Media
-	AddCategoryToMedia(media Media, category Category) Media
-	RemoveCategoryFromMedia(media Media, category Category) Media
+	NewMediaFromPath(filePath string) (Media, *DBError)
+	UpdateMedia(media Media) (Media, *DBError)
+	RemoveMedia(media Media) *DBError
+	GetMediaFromId(id int64) (Media, *DBError)
+	GetMediasFromCats(categories []Category, limit int, offsetn int) ([]Media, *DBError)
+	AddCategoryToMedia(media Media, category Category) (Media, *DBError)
+	RemoveCategoryFromMedia(media Media, category Category) (Media, *DBError)
 
-	NewCategory(name string) Category
-	RemoveCategory(category Category)
-	UpdateCategory(category Category) Category
-	GetCategoryFromId(id int64) Category
-	GetCategoriesFromId(ids []int64) []Category
-	GetCategoriesFromMedia(media Media) []Category
-	GetCategories() []Category
+	GetRandomMedia(type_ MediaType) (Media, *DBError)
+
+	NewCategory(name string) (Category, *DBError)
+	UpdateCategory(category Category) (Category, *DBError)
+	RemoveCategory(category Category) *DBError
+	GetCategoryFromId(id int64) (Category, *DBError)
+	GetCategoriesFromIds(ids []int64) ([]Category, *DBError)
+	GetCategoriesFromMedia(media Media) ([]Category, *DBError)
+	GetCategories() ([]Category, *DBError)
 }
 
 type Category struct {
@@ -48,10 +86,10 @@ type Category struct {
 	Name string
 }
 
-type categoryLink struct {
-	Media_id    int64
-	Category_id int64
-}
+// type categoryLink struct {
+// 	Media_id    int64
+// 	Category_id int64
+// }
 
 type Media struct {
 	Id          int64
@@ -87,7 +125,7 @@ func (db Database) initFs() {
 	}
 }
 
-func CheckFileExist(filePath string) (bool, error) {
+func CheckFileExist(filePath string) (bool, *DBError) {
 	_, err := os.Stat(filePath)
 	if err == nil {
 		return true, nil
@@ -95,5 +133,5 @@ func CheckFileExist(filePath string) (bool, error) {
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
-	return false, err
+	return false, &DBError{err, fmt.Sprintf("FS error on : %s", filePath), FileNotFound}
 }

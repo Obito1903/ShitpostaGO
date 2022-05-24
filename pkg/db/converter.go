@@ -1,19 +1,29 @@
 package db
 
 import (
-	"errors"
-	"log"
+	"fmt"
 	"os"
 	"path"
 
 	ffmpeg_go "github.com/u2takey/ffmpeg-go"
 )
 
-func FindMediaType(filePath string) (MediaType, bool, error) {
+const (
+	CVFileNotFound    ErrorCode = "CVFileNotFound"
+	CVUnkownMediaType ErrorCode = "CVUnkownMediaType"
+	CVFFmpeg          ErrorCode = "CVFFmpeg"
+	CVFileMove        ErrorCode = "CVFileMove"
+)
+
+/*
+ *  Find if the file is a video or an image
+ *
+ * Possible improvement :
+ *   - Use mime types
+ */
+func FindMediaType(filePath string) (mediaType MediaType, needConvert bool, dberr *DBError) {
 	ext := path.Ext(filePath)
-	var err error
-	var mediaType MediaType
-	needConvert := false
+	needConvert = false
 	switch ext {
 	case ".mp4", ".webm":
 		mediaType = Video
@@ -26,13 +36,18 @@ func FindMediaType(filePath string) (MediaType, bool, error) {
 		mediaType = Image
 		needConvert = true
 	default:
-		err = errors.New("unknown file format")
+		dberr = &DBError{
+			nil,
+			fmt.Sprintf("Unkown type for : %s", filePath),
+			CVUnkownMediaType,
+		}
 	}
 
-	return mediaType, needConvert, err
+	return mediaType, needConvert, nil
 }
 
-func convertVideo(sourceFile string, destFolder string, destName string) string {
+// Convert video to webm format if the source file is not in a web friendly format
+func convertVideo(sourceFile string, destFolder string, destName string) (string, *DBError) {
 
 	outPath := path.Join(destFolder, destName+".webm")
 	err := ffmpeg_go.Input(sourceFile).
@@ -43,59 +58,59 @@ func convertVideo(sourceFile string, destFolder string, destName string) string 
 			"c:a": "libopus",
 		}).
 		OverWriteOutput().ErrorToStdOut().Run()
-	checkConverterr(err)
-	return outPath
+	return outPath, checkErr(err, "FFmpeg transcode failed", CVFFmpeg)
 }
 
-func convertImage(sourceFile string, destFolder string, destName string) string {
+// Normalize image extension name like .jpeg, .jpg_large, .jfif to .jpeg
+func convertImage(sourceFile string, destFolder string, destName string) (outPath string, dberr *DBError) {
 	ext := path.Ext(sourceFile)
 	switch ext {
 	case ".jpeg", ".jpg_large", ".jfif":
 		ext = ".jpg"
-
 	}
-	outPath := path.Join(destFolder, destName+ext)
-	err := os.Rename(sourceFile, outPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	checkConverterr(err)
-	return outPath
+	outPath = path.Join(destFolder, destName+ext)
+	return outPath, moveFile(destFolder, outPath)
 }
 
-func moveFile(sourceFile string, destFile string) {
+// Move file on the fs
+func moveFile(sourceFile string, destFile string) (dberr *DBError) {
 	err := os.Rename(sourceFile, destFile)
-	if err != nil {
-		log.Fatal(err)
-	}
-	checkConverterr(err)
+	return checkErr(err, fmt.Sprintf("Could not move file '%s' to '%s'", sourceFile, destFile), CVFileMove)
 }
 
-func ImportFile(sourceFile string, destFolder string, destName string) (string, error) {
+// Import file into the database by renaming and transcoding it if necessary
+func ImportFile(sourceFile string, destFolder string, destName string) (outPath string, dberr *DBError) {
 	mediaType, needConvert, _ := FindMediaType(sourceFile)
-	outPath := path.Join(destFolder, destName+path.Ext(sourceFile))
-	var err error
+	outPath = path.Join(destFolder, destName+path.Ext(sourceFile))
 	switch mediaType {
 	case Video:
 		if needConvert {
-			outPath = convertVideo(sourceFile, destFolder, destName)
+			outPath, dberr = convertVideo(sourceFile, destFolder, destName)
+			if dberr != nil {
+				return "", dberr
+			}
 		} else {
-			moveFile(sourceFile, outPath)
+			if moveFile(sourceFile, outPath) != nil {
+				return "", dberr
+			}
 		}
 	case Image:
 		if needConvert {
-			outPath = convertImage(sourceFile, destFolder, destName)
+			outPath, dberr = convertImage(sourceFile, destFolder, destName)
+			if dberr != nil {
+				return "", dberr
+			}
 		} else {
-			moveFile(sourceFile, outPath)
+			if moveFile(sourceFile, outPath) != nil {
+				return "", dberr
+			}
 		}
 	case Unknown:
-		err = errors.New("unknown file format")
+		dberr = &DBError{
+			nil,
+			fmt.Sprintf("Unkown type for : %s", sourceFile),
+			CVUnkownMediaType,
+		}
 	}
-	return outPath, err
-}
-
-func checkConverterr(err error) {
-	if err != nil {
-		log.Fatal("CONVERTION ERROR : ", err)
-	}
+	return outPath, dberr
 }

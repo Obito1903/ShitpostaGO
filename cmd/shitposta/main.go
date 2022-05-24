@@ -1,5 +1,7 @@
 package main
 
+import "github.com/Obito1903/shitpostaGo/pkg/api"
+
 func main() {
-	println("hello, nothing for the moment")
+	api.Start("../../appTest")
 }

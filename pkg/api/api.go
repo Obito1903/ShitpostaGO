@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -20,9 +20,18 @@ type ApiError struct {
 }
 
 func newApiErrorFromDbErr(dberr db.DBError) (apiErr ApiError) {
+	log.Println(dberr)
 	switch dberr.Code {
 	case db.SQLScan:
-
+		return ApiError{
+			http.StatusNotFound,
+			"Not Found",
+		}
+	default:
+		return ApiError{
+			http.StatusInternalServerError,
+			"Unknown error",
+		}
 	}
 }
 
@@ -33,6 +42,7 @@ func sendError(w http.ResponseWriter, req *http.Request, apiErr ApiError) {
 }
 
 func (ctx HandlerContext) sendMedia(w http.ResponseWriter, req *http.Request, media db.Media) {
+
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	http.ServeFile(w, req, media.Path)
 }
@@ -44,21 +54,21 @@ func (ctx HandlerContext) getMediaById(w http.ResponseWriter, req *http.Request)
 	if dberr == nil {
 		ctx.sendMedia(w, req, media)
 	} else {
-		sendError(w, req, ApiError{
-			http.StatusNotFound,
-			dberr.Error(),
-		})
+		sendError(w, req, newApiErrorFromDbErr(*dberr))
 	}
 }
 
 func (ctx HandlerContext) getRandomMedia(w http.ResponseWriter, req *http.Request) {
-	media, _ := ctx.shitdb.GetRandomMedia(db.Video)
-	ctx.sendMedia(w, req, media)
+	media, dberr := ctx.shitdb.GetRandomMedia(db.Video)
+	if dberr == nil {
+		ctx.sendMedia(w, req, media)
+	} else {
+		sendError(w, req, newApiErrorFromDbErr(*dberr))
+	}
 }
 
 func (ctx HandlerContext) getCategories(w http.ResponseWriter, req *http.Request) {
 	categories, _ := ctx.shitdb.GetCategories()
-	fmt.Println(categories)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(categories)
 }

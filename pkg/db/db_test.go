@@ -30,15 +30,29 @@ func TestCategories(t *testing.T) {
 	shitdb := db.NewSqlite(db.Database{
 		Folder: "../../appTest/",
 	})
-	// cat := shitdb.NewCategory("test")
-	// t.Log(cat)
-	media := shitdb.GetMediaFromId(1)
+	cat1 := shitdb.NewCategory("test1")
+	cat2 := shitdb.NewCategory("test2")
+	cat3 := shitdb.NewCategory("test3")
 
-	// media = shitdb.AddCategoryToMedia(media, cat)
+	media1, err := shitdb.NewMediaFromPath(path.Join(shitdb.Folder, "/import/1.mp4"))
+	if err != nil {
+		t.Error("DB ERROR : ", err)
+	}
+	media2, err := shitdb.NewMediaFromPath(path.Join(shitdb.Folder, "/import/2.mp4"))
+	if err != nil {
+		t.Error("DB ERROR : ", err)
+	}
+	media1 = shitdb.AddCategoryToMedia(media1, cat1)
+	media1 = shitdb.AddCategoryToMedia(media1, cat2)
+	shitdb.AddCategoryToMedia(media1, cat3)
 
-	// media = shitdb.GetMediaFromId(1)
-	t.Log(media)
-	if media.Catergories == nil {
+	media2 = shitdb.AddCategoryToMedia(media2, cat1)
+	shitdb.AddCategoryToMedia(media2, cat2)
+
+	medias := shitdb.GetMediasFromCats([]db.Category{cat1, cat2}, 10, 0)
+
+	t.Log(medias)
+	if media1.Catergories == nil {
 		t.Error("No cats")
 	}
 }
