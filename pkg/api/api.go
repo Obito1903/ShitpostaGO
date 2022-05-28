@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
 	"github.com/Obito1903/shitpostaGo/pkg/db"
@@ -17,6 +18,9 @@ type HandlerContext struct {
 type ApiError struct {
 	ResponsCode int
 	Message     string
+}
+
+type MediaMeta struct {
 }
 
 func newApiErrorFromDbErr(dberr db.DBError) (apiErr ApiError) {
@@ -42,7 +46,6 @@ func sendError(w http.ResponseWriter, req *http.Request, apiErr ApiError) {
 }
 
 func (ctx HandlerContext) sendMedia(w http.ResponseWriter, req *http.Request, media db.Media) {
-
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	http.ServeFile(w, req, media.Path)
 }
@@ -61,22 +64,30 @@ func (ctx HandlerContext) getMediaById(w http.ResponseWriter, req *http.Request)
 func (ctx HandlerContext) getRandomMedia(w http.ResponseWriter, req *http.Request) {
 	media, dberr := ctx.shitdb.GetRandomMedia(db.Video)
 	if dberr == nil {
-		ctx.sendMedia(w, req, media)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(media)
 	} else {
 		sendError(w, req, newApiErrorFromDbErr(*dberr))
 	}
 }
 
 func (ctx HandlerContext) getCategories(w http.ResponseWriter, req *http.Request) {
-	categories, _ := ctx.shitdb.GetCategories()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(categories)
+	categories, dberr := ctx.shitdb.GetCategories()
+	if dberr == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(categories)
+	} else {
+		sendError(w, req, newApiErrorFromDbErr(*dberr))
+	}
 }
 
 func (ctx HandlerContext) Register() *mux.Router {
 	router := mux.NewRouter()
 
-	router.HandleFunc("/shit/{id:[0-9]+}", ctx.getMediaById)
+	router.HandleFunc("/shit/media/{id:[0-9]+}", ctx.getMediaById)
+	router.HandleFunc("/shit/meta/{id:[0-9]+}", ctx.getMediaById)
 	router.HandleFunc("/shit/getRandom", ctx.getRandomMedia)
 	router.HandleFunc("/shit/getCategories", ctx.getCategories)
 
@@ -84,14 +95,15 @@ func (ctx HandlerContext) Register() *mux.Router {
 }
 
 func Start(folder string) {
+	absPath, _ := filepath.Abs(folder)
 	shitdb, _ := db.NewSqlite(db.Database{
-		Folder: folder,
+		Folder: absPath,
 	})
 
 	ctx := HandlerContext{
 		shitdb: shitdb,
 	}
-
+	ctx.shitdb.ScanForMedias()
 	router := ctx.Register()
 	// http.Handle("/", router)
 

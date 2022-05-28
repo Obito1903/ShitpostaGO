@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
 	"path"
 	"strconv"
 	"strings"
@@ -33,8 +34,8 @@ func NewSqlite(config Database) (sqlite sqliteDB, dberr *DBError) {
 	var err error
 
 	sqlite.Database = config
-	sqlite.path = path.Join(config.Folder, "/db.sqlite")
 	sqlite.initFs()
+	sqlite.path = path.Join(config.Folder, "/db.sqlite")
 
 	sqlite.connection, err = sql.Open("sqlite3", sqlite.path)
 	dberr = checkErr(err, "Failed to open sqlite3 connection", InitFailed)
@@ -197,6 +198,21 @@ func (db sqliteDB) checkDB() (dberr *DBError) {
 
 func (db sqliteDB) GetConfig() Database {
 	return db.Database
+}
+
+func (db sqliteDB) ScanForMedias() (dberr *DBError) {
+	files, err := ioutil.ReadDir(path.Join(db.Folder, "/import/"))
+	if dberr := checkErr(err, "Could not open import folder", FileNotFound); dberr != (*DBError)(nil) {
+		return dberr
+	}
+	for _, file := range files {
+		_, dberr = db.NewMediaFromPath(path.Join(db.Folder, "/import/", file.Name()))
+		if dberr != (*DBError)(nil) {
+			return dberr
+		}
+	}
+
+	return nil
 }
 
 func (db sqliteDB) NewMediaFromPath(filePath string) (Media, *DBError) {

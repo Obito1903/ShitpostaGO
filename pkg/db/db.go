@@ -61,6 +61,7 @@ type Database struct {
 
 type DatabaseInterface interface {
 	GetConfig() Database
+	ScanForMedias() *DBError
 
 	NewMediaFromPath(filePath string) (Media, *DBError)
 	UpdateMedia(media Media) (Media, *DBError)
@@ -82,8 +83,8 @@ type DatabaseInterface interface {
 }
 
 type Category struct {
-	Id   int
-	Name string
+	Id   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // type categoryLink struct {
@@ -92,13 +93,13 @@ type Category struct {
 // }
 
 type Media struct {
-	Id          int64
-	Og_name     string
-	Name        string
-	Path        string
-	Date        time.Time
-	Type_       MediaType
-	Catergories []Category
+	Id          int64      `json:"id"`
+	Og_name     string     `json:"og_name"`
+	Name        string     `json:"name"`
+	Path        string     `json:"-"`
+	Date        time.Time  `json:"date"`
+	Type_       MediaType  `json:"type"`
+	Catergories []Category `json:"categories"`
 }
 
 func (media Media) String() string {
