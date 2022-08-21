@@ -90,6 +90,8 @@ type DB interface {
 	// Users
 	// Get user by id
 	GetUser(id int) (User, error)
+	// Get user by name
+	GetUserByName(name string) (User, error)
 
 	// New user, retuns user with new id
 	NewUser(user User) (User, error)
@@ -105,6 +107,8 @@ type DB interface {
 	RemoveCategoryFromMedia(mediaid int, categoryid int) error
 	// Remova all categories from media
 	RemoveAllCategoriesFromMedia(mediaid int) error
+	// Remove all media from category
+	RemoveAllMediaFromCategory(categoryid int) error
 
 	// Users relations to media
 	// Add Media to user
@@ -113,6 +117,7 @@ type DB interface {
 	RemoveMediaFromUser(mediaid int, userid int) error
 	// Remove all Media from user
 	RemoveAllMediaFromUser(userid int) error
-
+	// Remove all Users from media
+	RemoveAllUsersFromMedia(mediaid int) error
 	Close() error
 }
