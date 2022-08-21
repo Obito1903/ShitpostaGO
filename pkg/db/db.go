@@ -1,85 +1,34 @@
 package db
 
-import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/fs"
-	"log"
-	"os"
-	"path"
-	"time"
-)
+import "time"
 
-type MediaType string
+type MediaType int
 
 const (
-	Video   MediaType = "video"
-	Image   MediaType = "image"
-	Unknown MediaType = "unknown"
+	MediaType_Unknown MediaType = iota
+	MediaType_Image
+	MediaType_Video
+	MediaType_Audio
 )
 
-type ErrorCode string
+type PermissionLevel int
 
 const (
-	InitFailed    ErrorCode = "InitFailed"
-	FileNotFound  ErrorCode = "FileNotFound"
-	ImportFailed  ErrorCode = "ImportFailed"
-	EntryNotFound ErrorCode = "EntryNotFound"
+	PermissionLevel_Unknown PermissionLevel = iota
+	PermissionLevel_User
+	PermissionLevel_Admin
+	PermissionLevel_SuperAdmin
 )
 
-type DBError struct {
-	Err     error
-	Message string
-	Code    ErrorCode
-}
-
-func (dberr DBError) Error() string {
-	if dberr.Err != nil {
-		return fmt.Sprintf("%s: %s\n  ⎣%s", dberr.Code, dberr.Message, dberr.Err)
-	} else {
-		return fmt.Sprintf("%s: %s", dberr.Code, dberr.Message)
-	}
-}
-
-func checkErr(err error, message string, code ErrorCode) *DBError {
-	if (err != nil) && (err != (*DBError)(nil)) {
-		log.Println(err)
-		return &DBError{
-			err,
-			message,
-			code,
-		}
-	}
-	return nil
-}
-
-type Database struct {
-	DatabaseInterface
-	Folder string
-}
-
-type DatabaseInterface interface {
-	GetConfig() Database
-	ScanForMedias() *DBError
-
-	NewMediaFromPath(filePath string) (Media, *DBError)
-	UpdateMedia(media Media) (Media, *DBError)
-	RemoveMedia(media Media) *DBError
-	GetMediaFromId(id int64) (Media, *DBError)
-	GetMediasFromCats(categories []Category, limit int, offsetn int) ([]Media, *DBError)
-	AddCategoryToMedia(media Media, category Category) (Media, *DBError)
-	RemoveCategoryFromMedia(media Media, category Category) (Media, *DBError)
-
-	GetRandomMedia(type_ MediaType) (Media, *DBError)
-
-	NewCategory(name string) (Category, *DBError)
-	UpdateCategory(category Category) (Category, *DBError)
-	RemoveCategory(category Category) *DBError
-	GetCategoryFromId(id int64) (Category, *DBError)
-	GetCategoriesFromIds(ids []int64) ([]Category, *DBError)
-	GetCategoriesFromMedia(media Media) ([]Category, *DBError)
-	GetCategories() ([]Category, *DBError)
+type Metadata struct {
+	Id          int       `json:"id"`
+	OgName      string    `json:"og_name"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	MediaType   MediaType `json:"media_type"`
+	FileType    string    `json:"file_type"`
+	DateAdded   time.Time `json:"date_added"`
+	DateCreated time.Time `json:"date_created"`
 }
 
 type Category struct {
@@ -87,52 +36,83 @@ type Category struct {
 	Name string `json:"name"`
 }
 
-// type categoryLink struct {
-// 	Media_id    int64
-// 	Category_id int64
-// }
-
-type Media struct {
-	Id          int64      `json:"id"`
-	Og_name     string     `json:"og_name"`
-	Name        string     `json:"name"`
-	Path        string     `json:"-"`
-	Date        time.Time  `json:"date"`
-	Type_       MediaType  `json:"type"`
-	Catergories []Category `json:"categories"`
+type User struct {
+	Id         int    `json:"id"`
+	Name       string `json:"name"`
+	HashPass   string `json:"hash_pass"`
+	Permission int    `json:"permission"`
 }
 
-func (media Media) String() string {
-	out, _ := json.Marshal(media)
-	return string(out)
-}
+type DB interface {
+	// Medias
+	// Get media by id
+	GetMedia(id int) (Metadata, error)
+	// Get media by name
+	GetMediaByName(name string) (Metadata, error)
+	// Get random media of spcified type
+	GetMediaRandom(mediatype MediaType) (Metadata, error)
+	// Get Redom media of specified type and category
+	GetMediaRandomByCategory(mediatype MediaType, categoryid int) (Metadata, error)
+	// Get all media faved by user
+	GetMediasFromUser(user User) ([]Metadata, error)
+	// Get all media of type
+	GetMediasByType(mediaType MediaType) ([]Metadata, error)
+	// Get all media of type and category
+	GetMediasByTypeAndCategory(mediaType MediaType, categoryid int) ([]Metadata, error)
 
-func checkDBerr(err error) {
-	if err != nil {
-		log.Fatal("DB ERROR : ", err)
-	}
-}
+	// Search media by name
+	SearchMediaByName(name string) ([]Metadata, error)
 
-func (db Database) initFs() {
-	for _, folder := range [4]string{
-		db.Folder,
-		path.Join(db.Folder, "/videos/"),
-		path.Join(db.Folder, "/images/"),
-		path.Join(db.Folder, "/import/"),
-	} {
-		if _, err := os.Stat(folder); os.IsNotExist(err) {
-			os.MkdirAll(folder, os.ModePerm)
-		}
-	}
-}
+	// Create a new media, retuns metadata with new id
+	NewMedia(metadata Metadata) (Metadata, error)
+	// Update media metadata, only update the name
+	UpdateMedia(metadata Metadata) error
+	// Delete media
+	DeleteMedia(id int) error
 
-func CheckFileExist(filePath string) (bool, *DBError) {
-	_, err := os.Stat(filePath)
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, fs.ErrNotExist) {
-		return false, nil
-	}
-	return false, &DBError{err, fmt.Sprintf("FS error on : %s", filePath), FileNotFound}
+	// Categories
+	// Get category by id
+	GetCategory(id int) (Category, error)
+	// Get category by name
+	GetCategoryByName(name string) (Category, error)
+	// Get all categories of a media
+	GetCategoriesFromMedia(mediaid int) ([]Category, error)
+	// Get all categories
+	GetCategories() ([]Category, error)
+
+	// Create a new category, retuns category with new id
+	NewCategory(category Category) (Category, error)
+	// Update category, only update the name
+	UpdateCategory(category Category) (Category, error)
+	// Delete category
+	DeleteCategory(id int) error
+
+	// Users
+	// Get user by id
+	GetUser(id int) (User, error)
+
+	// New user, retuns user with new id
+	NewUser(user User) (User, error)
+	// Update user, only update the name
+	UpdateUser(user User) (User, error)
+	// Delete user
+	DeleteUser(id int) error
+
+	// Categories relations to media
+	// Add category to media
+	AddCategoryToMedia(mediaid int, categoryid int) error
+	// Remove category from media
+	RemoveCategoryFromMedia(mediaid int, categoryid int) error
+	// Remova all categories from media
+	RemoveAllCategoriesFromMedia(mediaid int) error
+
+	// Users relations to media
+	// Add Media to user
+	AddMediaToUser(mediaid int, userid int) error
+	// Remove Media from user
+	RemoveMediaFromUser(mediaid int, userid int) error
+	// Remove all Media from user
+	RemoveAllMediaFromUser(userid int) error
+
+	Close() error
 }
