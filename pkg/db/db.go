@@ -1,6 +1,15 @@
 package db
 
-import "time"
+import (
+	"os"
+	"time"
+
+	"github.com/rs/zerolog"
+)
+
+var (
+	Log = zerolog.New(os.Stdout).With().Timestamp().Caller().Logger().Level(zerolog.DebugLevel).Output(zerolog.ConsoleWriter{Out: os.Stdout})
+)
 
 type MediaType int
 
@@ -43,7 +52,7 @@ type User struct {
 	Permission int    `json:"permission"`
 }
 
-type DB interface {
+type metaDB interface {
 	// Medias
 	// Get media by id
 	GetMedia(id int) (Metadata, error)
@@ -83,7 +92,7 @@ type DB interface {
 	// Create a new category, retuns category with new id
 	NewCategory(category Category) (Category, error)
 	// Update category, only update the name
-	UpdateCategory(category Category) (Category, error)
+	UpdateCategory(category Category) error
 	// Delete category
 	DeleteCategory(id int) error
 
@@ -96,7 +105,7 @@ type DB interface {
 	// New user, retuns user with new id
 	NewUser(user User) (User, error)
 	// Update user, only update the name
-	UpdateUser(user User) (User, error)
+	UpdateUser(user User) error
 	// Delete user
 	DeleteUser(id int) error
 
@@ -120,4 +129,14 @@ type DB interface {
 	// Remove all Users from media
 	RemoveAllUsersFromMedia(mediaid int) error
 	Close() error
+}
+
+type DB struct {
+	metaDB
+	path string
+}
+
+func NewDB(dbmeta metaDB, path string) *DB {
+
+	return &DB{dbmeta, path}
 }

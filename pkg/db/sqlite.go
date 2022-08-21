@@ -2,8 +2,59 @@ package db
 
 import (
 	"database/sql"
+	"errors"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
+)
+
+const (
+	sqliteinitscript = `
+CREATE TABLE IF NOT EXISTS metadatas (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	og_name TEXT NOT NULL UNIQUE,
+	name TEXT UNIQUE,
+	media_type INTEGER NOT NULL,
+	file_type TEXT NOT NULL,
+	date_added DATETIME DEFAULT CURRENT_TIMESTAMP,
+	date_created DATETIME
+);
+
+CREATE TABLE IF NOT EXISTS categories (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS users (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	name TEXT UNIQUE NOT NULL,
+	hash_pass TEXT NOT NULL,
+	permission INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS metadata_category (
+	metadata_id INTEGER NOT NULL,
+	category_id INTEGER NOT NULL,
+
+	CONSTRAINT meta_cat_pk PRIMARY KEY (metadata_id,category_id),
+	UNIQUE(metadata_id,category_id) ON CONFLICT REPLACE
+
+	FOREIGN KEY (metadata_id) REFERENCES metadatas(id),
+	FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+
+CREATE TABLE IF NOT EXISTS user_fav (
+	user_id INTEGER NOT NULL,
+	meta_id INTEGER NOT NULL,
+
+	CONSTRAINT  user_fav_pk PRIMARY KEY (user_id,meta_id),
+	UNIQUE(user_id,meta_id) ON CONFLICT REPLACE
+
+
+	FOREIGN KEY (user_id) REFERENCES users(id),
+	FOREIGN KEY (meta_id) REFERENCES metadatas(id)
+);
+`
 )
 
 type SqliteDriver struct {
@@ -11,10 +62,25 @@ type SqliteDriver struct {
 }
 
 func NewSqliteDriver(dbpath string) (*SqliteDriver, error) {
+	needinit := false
+	if _, err := os.Stat(dbpath); errors.Is(err, os.ErrNotExist) {
+		needinit = true
+	}
+
+	Log.Info().Msgf("Connecting to sqlite database: %s", dbpath)
 	db, err := sql.Open("sqlite3", dbpath)
 	if err != nil {
 		return nil, err
 	}
+
+	if needinit {
+		Log.Info().Msg("Initializing sqlite database")
+		_, err := db.Exec(sqliteinitscript)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &SqliteDriver{db}, nil
 }
 
