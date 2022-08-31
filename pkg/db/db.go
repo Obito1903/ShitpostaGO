@@ -33,7 +33,6 @@ type Metadata struct {
 	Id          int       `json:"id"`
 	OgName      string    `json:"og_name"`
 	Name        string    `json:"name"`
-	Type        string    `json:"type"`
 	MediaType   MediaType `json:"media_type"`
 	FileType    string    `json:"file_type"`
 	DateAdded   time.Time `json:"date_added"`

@@ -98,7 +98,6 @@ func scanMediaRow(row *sql.Row) (Metadata, error) {
 		&metadata.Id,
 		&metadata.OgName,
 		&metadata.Name,
-		&metadata.Type,
 		&metadata.MediaType,
 		&metadata.FileType,
 		&metadata.DateAdded,
@@ -115,7 +114,6 @@ func scanMediaRows(rows *sql.Rows) ([]Metadata, error) {
 			&metadata.Id,
 			&metadata.OgName,
 			&metadata.Name,
-			&metadata.Type,
 			&metadata.MediaType,
 			&metadata.FileType,
 			&metadata.DateAdded,
@@ -455,7 +453,7 @@ func (d *SqliteDriver) RemoveAllMediaFromCategory(categoryid int) error {
 //-------------------------------
 
 func (d *SqliteDriver) AddMediaToUser(mediaid int, userid int) error {
-	stmt, err := d.db.Prepare("INSERT OR REPLACE INTO metadata_user (metadata_id,user_id) VALUES (?,?);")
+	stmt, err := d.db.Prepare("INSERT OR REPLACE INTO user_fav (meta_id,user_id) VALUES (?,?);")
 	if err != nil {
 		return err
 	}
@@ -465,7 +463,7 @@ func (d *SqliteDriver) AddMediaToUser(mediaid int, userid int) error {
 }
 
 func (d *SqliteDriver) RemoveMediaFromUser(mediaid int, userid int) error {
-	stmt, err := d.db.Prepare("DELETE FROM metadata_user WHERE metadata_id = ? AND user_id = ?;")
+	stmt, err := d.db.Prepare("DELETE FROM user_fav WHERE meta_id = ? AND user_id = ?;")
 	if err != nil {
 		return err
 	}
@@ -475,7 +473,7 @@ func (d *SqliteDriver) RemoveMediaFromUser(mediaid int, userid int) error {
 }
 
 func (d *SqliteDriver) RemoveAllMediaFromUser(userid int) error {
-	stmt, err := d.db.Prepare("DELETE FROM metadata_user WHERE user_id = ?;")
+	stmt, err := d.db.Prepare("DELETE FROM user_fav WHERE user_id = ?;")
 	if err != nil {
 		return err
 	}
@@ -485,7 +483,7 @@ func (d *SqliteDriver) RemoveAllMediaFromUser(userid int) error {
 }
 
 func (d *SqliteDriver) RemoveAllUsersFromMedia(mediaid int) error {
-	stmt, err := d.db.Prepare("DELETE FROM metadata_user WHERE metadata_id = ?;")
+	stmt, err := d.db.Prepare("DELETE FROM user_fav WHERE meta_id = ?;")
 	if err != nil {
 		return err
 	}
