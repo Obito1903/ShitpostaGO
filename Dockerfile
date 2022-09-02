@@ -8,7 +8,7 @@ COPY go.mod go.sum ./
 RUN go mod download && go mod verify
 
 COPY . .
-RUN apk add --no-cache build-base ffmpeg && \
+RUN apk add --no-cache build-base ffmpeg imagemagick && \
     go build -v -o /shitposta/shitposta ./main.go
 
 EXPOSE 80

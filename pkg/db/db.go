@@ -51,7 +51,7 @@ type User struct {
 	Permission int    `json:"permission"`
 }
 
-type metaDB interface {
+type metaDB_interface interface {
 	// Medias
 	// Get media by id
 	GetMedia(id int) (Metadata, error)
@@ -130,12 +130,27 @@ type metaDB interface {
 	Close() error
 }
 
+type fsMediaDB_interface interface {
+	// Get media
+	GetMedia(media Metadata) ([]byte, error)
+	// Add media
+	AddMedia(srouce string) (Metadata, error)
+	// Remove media
+	RemoveMedia(media Metadata) error
+	// Get media thumbnail
+	GetThumbnail(media Metadata) ([]byte, error)
+}
+
 type DB struct {
-	metaDB
+	metaDB_interface
 	path string
 }
 
-func NewDB(dbmeta metaDB, path string) *DB {
+func NewDB(dbmeta metaDB_interface, path string) *DB {
 
 	return &DB{dbmeta, path}
+}
+
+func (db *FsMediaDB) GetThumbnail(media Metadata) ([]byte, error) {
+	return nil, nil
 }

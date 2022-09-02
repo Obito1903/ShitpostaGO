@@ -5,7 +5,8 @@ This a project was greatly inspired by [this one](https://github.com/alecs297/sh
 ## Requirement
 
 - [Golang](https://golang.org/) 1.16 or above
-- [ffmpeg](https://www.ffmpeg.org/) (for gifs transcoding)
+- [ffmpeg](https://www.ffmpeg.org/) for video transcoding
+- [imagick](https://imagemagick.org/index.php) for image convertion
 
 ## Usage
 
