@@ -12,7 +12,8 @@ func Test1(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	db_inst := db.NewDB(sql, "../../tmp")
+	fsdb := db.NewFsMediaDB("../../tmp")
+	db_inst := db.NewDB(sql, fsdb, "../../tmp")
 
 	fmt.Println("Creating media")
 	media, err := db_inst.NewMedia(db.Metadata{

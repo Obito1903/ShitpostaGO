@@ -26,5 +26,6 @@ func TestConvertVideo(t *testing.T) {
 
 func TestAddMedia(t *testing.T) {
 	fsdb := db.FsMediaDB{Path: "../../tmp"}
-	fsdb.AddMedia()
+	fsdb.RemoveSource = false
+	fsdb.AddMedia(1, "/home/obito/documents/ShitpostaGO/test/img1.gif")
 }

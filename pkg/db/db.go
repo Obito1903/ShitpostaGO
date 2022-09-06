@@ -134,7 +134,7 @@ type fsMediaDB_interface interface {
 	// Get media
 	GetMedia(media Metadata) ([]byte, error)
 	// Add media
-	AddMedia(srouce string) (Metadata, error)
+	AddMedia(id int, source string) (Metadata, error)
 	// Remove media
 	RemoveMedia(media Metadata) error
 	// Get media thumbnail
@@ -142,15 +142,12 @@ type fsMediaDB_interface interface {
 }
 
 type DB struct {
-	metaDB_interface
-	path string
+	metadb  metaDB_interface
+	mediadb fsMediaDB_interface
+	path    string
 }
 
-func NewDB(dbmeta metaDB_interface, path string) *DB {
+func NewDB(dbmeta metaDB_interface, mediadb fsMediaDB_interface, path string) *DB {
 
-	return &DB{dbmeta, path}
-}
-
-func (db *FsMediaDB) GetThumbnail(media Metadata) ([]byte, error) {
-	return nil, nil
+	return &DB{dbmeta, mediadb, path}
 }
